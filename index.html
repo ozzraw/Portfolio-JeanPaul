@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080808">
+  <meta name="description" content="JeanPaul — Photography & moving image. Selected works.">
+  <title>JeanPaul — Photography & Moving Image</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23080808'/%3E%3Ctext x='7' y='45' fill='white' font-family='Arial' font-size='36'%3EJP%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="projects.js"></script>
+  <script defer src="script.js"></script>
+  <script defer src="weight-hover.js"></script>
+</head>
+<body>
+  <a class="skip" href="#works">Skip to works</a>
+  <header class="header">
+    <a class="wordmark" href="#home" aria-label="JeanPaul — Home">JeanPaul<span class="mark">✳</span></a>
+    <span class="header-note">INDEPENDENT IMAGE MAKING</span>
+    <nav aria-label="Main navigation"><a href="#works">All Works <sup id="nav-count"></sup></a><a href="#contact">Contact <span aria-hidden="true">↗</span></a></nav>
+  </header>
+  <main>
+    <section id="home" class="home" aria-label="Selected works">
+      <div class="intro"><span class="dot"></span> PHOTOGRAPHY & MOVING IMAGE<span class="edition">SELECTED ARCHIVE — VOL. 01</span></div>
+      <div class="stage" id="stage" aria-label="Interactive project gallery. Drag or scroll to explore.">
+        <div class="orbit" id="orbit"></div>
+        <div class="axis" aria-hidden="true"><span>+</span><span>+</span></div>
+      </div>
+      <div class="home-caption"><span>STILLS. FILMS.<br>A WAY OF SEEING.</span><span class="explore-hint">↔ &nbsp; DRAG TO EXPLORE<br>SCROLL TO ROTATE · CLICK TO OPEN</span></div>
+      <h1 class="hero-name">JeanPaul<span>✳</span></h1>
+      <footer class="home-footer"><div class="segmented" aria-label="Gallery layout"><button data-layout="orbit" aria-pressed="true">Orbit</button><button data-layout="scatter" aria-pressed="false">Spread</button></div><div class="gallery-arrows"><button id="previous" aria-label="Rotate gallery left">←</button><button id="next" aria-label="Rotate gallery right">→</button></div><a href="#works" class="archive-link">EXPLORE THE ARCHIVE <span>↗</span></a></footer>
+    </section>
+    <section id="works" class="page" hidden>
+      <div class="section-kicker">INDEX / SELECTED PROJECTS</div>
+      <div class="page-heading"><h1>All works<span id="work-count"></span></h1><p>Photography.<br>Moving image.<br>Different points of view.</p></div>
+      <div class="toolbar"><div class="filters" aria-label="Filter works"><button data-filter="all" aria-pressed="true">All</button><button data-filter="photography" aria-pressed="false">Photography</button><button data-filter="film" aria-pressed="false">Film</button></div><div class="view-toggle" aria-label="Display"><button data-view="grid" aria-pressed="true" aria-label="Grid view">▦</button><button data-view="list" aria-pressed="false" aria-label="List view">☰</button></div></div>
+      <div id="project-grid" class="project-grid" aria-live="polite"></div>
+      <footer class="page-footer"><span>JEANPAUL — PHOTOGRAPHY & MOVING IMAGE</span><a href="#contact">LET’S TALK ↗</a></footer>
+    </section>
+    <section id="contact" class="page contact" hidden>
+      <div class="section-kicker">CONTACT / START A CONVERSATION</div>
+      <h1>Let’s make<br>something<span class="serif"> together.</span></h1>
+      <div class="contact-details"><p>For projects, collaborations<br>and everything in between.</p><div id="contact-links"></div></div>
+      <div class="contact-signature" aria-hidden="true">JeanPaul↗</div>
+      <footer class="page-footer"><span>PHOTOGRAPHY & MOVING IMAGE</span><a href="#works">BACK TO THE WORK ↗</a></footer>
+    </section>
+  </main>
+  <dialog id="project-dialog" aria-labelledby="project-title">
+    <div class="dialog-bar"><span>JEANPAUL / SELECTED WORK</span><button id="close-project" aria-label="Close project">Close <span>×</span></button></div>
+    <div id="project-content"></div>
+  </dialog>
+  <noscript><p class="noscript">Please enable JavaScript to explore the portfolio.</p></noscript>
+</body>
+</html>
