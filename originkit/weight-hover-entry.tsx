@@ -15,7 +15,7 @@ function enhance() {
         const node = walker.currentNode;
         const parent = node.parentElement;
         if (!node.textContent.trim() || !/[\p{L}\p{N}]/u.test(node.textContent)) continue;
-        if (!parent?.closest(selector) || parent.closest('[data-weight-hover], script, style, .mark')) continue;
+        if (!parent?.closest(selector) || parent.closest('[data-weight-hover], script, style, .mark, #brand-intro')) continue;
         nodes.push(node);
     }
     for (const node of nodes) {

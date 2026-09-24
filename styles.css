@@ -32,3 +32,94 @@ dialog[open]{animation:panel-fade-in .23s ease-out}
 dialog[open]::backdrop{animation:panel-fade-in .23s ease-out}
 dialog.is-closing::backdrop{animation:panel-fade-out .17s ease-in forwards}
 @media(prefers-reduced-motion:reduce){dialog[open],dialog[open]::backdrop,dialog.is-closing::backdrop{animation:none}}
+
+/* Fade the lower wordmark with the selected gallery layout. */
+.hero-name{opacity:1;visibility:visible;transition:opacity .3s ease,visibility 0s}
+.home.is-spread .hero-name{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .3s ease,visibility 0s .3s}
+
+/* Phone layout only: separate gallery, captions, title and touch controls. */
+@media(max-width:600px){
+  .header{height:auto;min-height:80px;padding:18px 20px;gap:16px;flex-wrap:wrap}
+  .header nav{gap:20px;font-size:11px}
+  .header nav a{min-height:44px;display:inline-flex;align-items:center}
+  .home{height:auto;min-height:calc(100svh - 80px);display:flex;flex-direction:column;padding-bottom:max(20px,env(safe-area-inset-bottom));overflow:hidden}
+  .intro{margin:12px 20px 0;font-size:8px;line-height:1.6}
+  .edition{display:none}
+  .stage{position:relative;inset:auto;flex:none;width:100%;height:390px;margin:20px 0 10px}
+  .gallery-card,.gallery-card:nth-child(3n + 1){width:clamp(112px,33vw,175px)}
+  .gallery-card img{height:clamp(112px,32vw,170px)}
+  .gallery-card:nth-child(3n + 1) img{height:clamp(148px,42vw,210px)}
+  .gallery-card .card-caption{font-size:8px;letter-spacing:.45px;line-height:1.5;gap:6px}
+  .card-caption>span:first-child{min-width:0;overflow-wrap:anywhere}
+  .home-caption{position:static;margin:0 20px 24px;gap:20px;align-items:start;font-size:8px}
+  .explore-hint{max-width:150px;font-size:7px;line-height:1.7}
+  .hero-name{position:relative;inset:auto;margin:0 16px 28px;font-size:19vw;line-height:1;flex:none}
+  .hero-name>span:not([data-weight-hover]){margin-left:8px}
+  .home-footer{position:static;margin:0 20px;gap:16px;flex-wrap:wrap}
+  .segmented button{min-height:44px;padding:10px 16px;font-size:11px}
+  .gallery-arrows{margin:0 0 0 auto;gap:10px}
+  .gallery-arrows button{width:44px;height:44px}
+  .archive-link{display:none}
+  .home.is-spread .stage{height:auto;margin:28px 0 24px;perspective:none}
+  .home.is-spread .orbit{position:relative;inset:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 18px;padding:0 20px;perspective:none}
+  .home.is-spread .gallery-card{position:relative;inset:auto;width:100%;transform:none!important;filter:none!important}
+  .home.is-spread .gallery-card img{height:auto;aspect-ratio:4/3;object-fit:cover}
+  .home.is-spread .axis{display:none}
+  .home.is-spread .hero-name{position:absolute;bottom:80px;left:0;right:0}
+  .page{padding:30px 20px 0}
+  .page-heading{margin:28px 0 32px}
+  .page-heading h1{font-size:clamp(42px,12vw,68px)}
+  .page-heading p{display:none}
+  .toolbar{flex-wrap:wrap;gap:14px;margin-bottom:28px;padding-bottom:14px}
+  .filters{gap:18px;flex-wrap:wrap}
+  .filters button,.view-toggle button{min-height:44px}
+  .project-grid{grid-template-columns:minmax(0,1fr);gap:36px}
+  .work-info{gap:8px 12px;align-items:baseline}
+  .work-title{font-size:17px;line-height:1.45;min-width:0;overflow-wrap:anywhere;flex:1}
+  .work-meta{font-size:9px;flex-basis:100%;margin-left:24px}
+  .list .work-card{gap:16px;padding:20px 0}
+  .list .work-info{min-width:0}
+  .list .work-title{font-size:17px;letter-spacing:0}
+  .page-footer{margin-top:48px;gap:20px;flex-wrap:wrap;line-height:1.8}
+  dialog{width:calc(100vw - 24px);max-height:calc(100svh - 24px)}
+  .dialog-bar{padding:8px 14px;gap:12px}
+  .dialog-bar button{min-height:44px}
+  .project-heading{display:block;padding:24px 16px}
+  .project-heading h2{font-size:clamp(26px,8vw,42px);overflow-wrap:anywhere;line-height:1.15}
+  .media-figure{margin:0 12px 24px}
+  .contact h1{font-size:12vw;line-height:1.15;margin:36px 0}
+  .contact-details{grid-template-columns:1fr;gap:28px}
+}
+
+@media(max-width:600px){
+  .home:not(.is-spread) .orbit-rear .card-caption{visibility:hidden}
+  .home-caption{letter-spacing:.5px}
+  .home-caption>span{min-width:0}
+}
+
+/* Intro is independent from the page layout and the hover lettering. */
+@font-face{font-family:InterVariableFramer;src:url("https://rsms.me/inter/font-files/InterVariable.woff2?v=4.0") format("woff2-variations");font-weight:100 900;font-style:normal;font-display:swap}
+#brand-intro{display:none;position:fixed;inset:0;z-index:10000;background:var(--bg);color:var(--ink);align-items:center;justify-content:center}
+.intro-playing{overflow:hidden}
+.intro-playing #brand-intro{display:flex}
+.intro-word{display:flex;align-items:baseline;white-space:nowrap;font-family:InterVariableFramer,"Inter Variable",Inter,Arial,sans-serif;font-weight:600;font-size:clamp(60px,16vw,220px);letter-spacing:-.0586em;line-height:1.2;font-variation-settings:"wght" 600}
+/* Keep the P's full glyph width: negative tracking otherwise lets the
+   expanding “aul” paint over its bowl during the spring movement. */
+.intro-initial{opacity:0;letter-spacing:0;flex-shrink:0;position:relative;z-index:1}
+.intro-expansion{display:block;width:0;opacity:0;overflow:hidden;flex-shrink:0;clip-path:inset(0)}
+.intro-expansion>span{display:inline-block;white-space:nowrap;padding-right:.02em}
+.intro-skip{position:absolute;right:clamp(20px,4vw,60px);bottom:max(24px,env(safe-area-inset-bottom));padding:14px 0;font:10px Arial,sans-serif;letter-spacing:1px;color:var(--muted)}
+@media(prefers-reduced-motion:reduce){.intro-playing #brand-intro{display:none}}
+
+/* Reveal the page title after the intro without overriding Spread's fade. */
+.hero-name{clip-path:inset(0 0 0 0);transition:opacity .3s ease,visibility 0s,clip-path 1.2s cubic-bezier(.22,.61,.36,1)}
+.hero-name.title-awaiting-intro{clip-path:inset(0 100% 0 0);pointer-events:none}
+.home.is-spread .hero-name{transition:opacity .3s ease,visibility 0s .3s,clip-path 1.2s cubic-bezier(.22,.61,.36,1)}
+
+/* Orbit-only shared-image entrance; the dialog keeps its existing content order. */
+dialog.from-orbit{animation:none;overflow:visible;background:transparent;border-color:transparent;transition:background .32s ease,border-color .32s ease}
+dialog.from-orbit>.dialog-bar,dialog.from-orbit>#project-content{opacity:0;transition:opacity .32s ease;pointer-events:none}
+dialog.from-orbit.orbit-revealing{background:#0c0c0c;border-color:#555}
+dialog.from-orbit.orbit-revealing>.dialog-bar,dialog.from-orbit.orbit-revealing>#project-content{opacity:1;pointer-events:auto}
+.project-opening-image{position:fixed;display:block;object-fit:cover;pointer-events:none;z-index:10;max-width:none;max-height:none;margin:0}
+dialog video.detail-media{aspect-ratio:16/9}

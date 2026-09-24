@@ -43,10 +43,47 @@
     try { await incoming.finished; } catch { return; }
     if (fades.get(element) === incoming) fades.delete(element);
   }
+  let openingCleanup = null;
+  async function expandFromCard(source, start) {
+    const target = dialog.querySelector('.youtube-player, .detail-media');
+    if (!target) { dialog.classList.remove('from-orbit'); return; }
+    const clone = source.cloneNode(false);
+    clone.className = 'project-opening-image';
+    clone.alt = '';
+    clone.setAttribute('aria-hidden', 'true');
+    Object.assign(clone.style, { left: `${start.left}px`, top: `${start.top}px`, width: `${start.width}px`, height: `${start.height}px` });
+    dialog.append(clone);
+    let cancelled = false;
+    let animation;
+    const cleanup = () => {
+      cancelled = true;
+      animation?.cancel();
+      clone.remove();
+      dialog.classList.remove('from-orbit', 'orbit-revealing');
+      openingCleanup = null;
+    };
+    openingCleanup = cleanup;
+    try {
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      if (cancelled) return;
+      const end = target.getBoundingClientRect();
+      const rect = r => ({ left: `${r.left}px`, top: `${r.top}px`, width: `${r.width}px`, height: `${r.height}px` });
+      Object.assign(clone.style, rect(start));
+      animation = clone.animate([rect(start), rect(end)], {
+        duration: 560, easing: 'cubic-bezier(.22,.75,.2,1)', fill: 'forwards'
+      });
+      await animation.finished;
+      if (cancelled) return;
+      dialog.classList.add('orbit-revealing');
+      await clone.animate([{opacity:1},{opacity:0}], {duration:320,fill:'forwards',easing:'ease-out'}).finished;
+    } catch { /* Closing mid-transition cancels the opening cleanly. */ }
+    finally { if (!cancelled) cleanup(); }
+  }
   let closingDialog = false;
   async function closeProject() {
     if (!dialog.open || closingDialog) return;
     closingDialog = true;
+    openingCleanup?.();
     dialog.classList.add('is-closing');
     if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
       await dialog.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 170, easing: 'ease-in' }).finished;
@@ -57,7 +94,12 @@
   }
   dialog.addEventListener('cancel', (event) => { event.preventDefault(); closeProject(); });
 
-  function openProject(project) {
+  function openProject(project, sourceCard = null) {
+    if (dialog.open || closingDialog) return;
+    const source = sourceCard?.querySelector('img');
+    const start = source?.getBoundingClientRect();
+    const expand = source && start.width > 0 && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    dialog.classList.toggle('from-orbit', Boolean(expand));
     const content = $('#project-content');
     content.replaceChildren();
     const heading = make('div', 'project-heading');
@@ -65,7 +107,16 @@
     titleGroup.append(make('small', '', `${categoryName(project)} / ${project.year || ''}`));
     const title = make('h2', '', project.title); title.id = 'project-title';
     titleGroup.append(title);
-    heading.append(titleGroup, make('p', '', project.description || ''));
+    const description = make('p');
+    if (Array.isArray(project.description)) {
+      project.description.forEach((part) => {
+        const text = typeof part === 'string' ? part : part?.text || '';
+        description.append(part?.bold ? make('strong', '', text) : document.createTextNode(text));
+      });
+    } else {
+      description.textContent = project.description || '';
+    }
+    heading.append(titleGroup, description);
     content.append(heading);
     const media = project.media?.length ? project.media : [{ type: 'image', src: project.cover }];
     media.forEach((item) => {
@@ -111,7 +162,8 @@
     document.body.classList.add('modal-open');
     dialog.showModal();
     dialog.scrollTop = 0;
-    $('#close-project').focus();
+    $('#close-project').focus({ preventScroll: true });
+    if (expand) expandFromCard(source, start);
   }
   $('#close-project').addEventListener('click', () => closeProject());
   dialog.addEventListener('click', (event) => { if (event.target === dialog) {
@@ -119,6 +171,7 @@
     if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) closeProject();
   }});
   dialog.addEventListener('close', () => {
+    openingCleanup?.();
     dialog.querySelectorAll('video').forEach((v) => { v.pause(); v.removeAttribute('src'); v.load(); });
     dialog.querySelectorAll('iframe').forEach((frame) => frame.remove());
     document.body.classList.remove('modal-open');
@@ -168,7 +221,7 @@
     const caption = make('span', 'card-caption');
     caption.append(make('span', '', `${pad(i + 1)} / ${project.title}`), make('span', '', project.category === 'film' ? '▶' : '↗'));
     card.append(caption);
-    card.addEventListener('click', () => { if (!dragged) openProject(project); });
+    card.addEventListener('click', () => { if (!dragged) openProject(project, layout === 'orbit' ? card : null); });
     card.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') dragged = false; });
     $('#orbit').append(card); return card;
   });
@@ -177,9 +230,10 @@
     galleryCards.forEach((card, i) => {
       const theta = i / Math.max(galleryCards.length, 1) * Math.PI * 2 + angle;
       const depth = Math.cos(theta);
+      card.classList.toggle('orbit-rear', layout === 'orbit' && depth < .35);
       let x, y, z, rotate;
       if (layout === 'orbit') {
-        x = Math.sin(theta) * width * .37;
+        x = Math.sin(theta) * width * (matchMedia('(max-width:600px)').matches ? .26 : .37);
         y = Math.sin(theta * 2) * height * .17 - depth * height * .085;
         z = depth * 150 - 95;
         rotate = -Math.sin(theta) * 21;
@@ -217,6 +271,7 @@
   $('#next').addEventListener('click', () => { targetAngle += .6; animate(); });
   document.querySelectorAll('[data-layout]').forEach((button) => button.addEventListener('click', () => {
     layout = button.dataset.layout;
+    $('#home').classList.toggle('is-spread', layout === 'scatter');
     document.querySelectorAll('[data-layout]').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
     fadeChange($('#orbit'), draw);
   }));
