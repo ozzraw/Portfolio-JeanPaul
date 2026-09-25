@@ -134,6 +134,19 @@ dialog video.detail-media{aspect-ratio:16/9}
 .orbit-preview-text{height:100%;display:flex;flex-direction:column;justify-content:center;gap:14px;overflow:auto;scrollbar-width:none}
 .orbit-preview-title{display:block;font-size:clamp(20px,2.1vw,34px);font-weight:400;letter-spacing:-.055em;line-height:1.08;overflow-wrap:anywhere}
 .orbit-preview-description{display:block;color:var(--muted);font-size:clamp(11px,1vw,14px);line-height:1.55;letter-spacing:0;text-align:justify;hyphens:none;word-break:normal;overflow-wrap:normal}
+.contact-email-row{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.contact h1#contact-headline{display:grid;line-height:1.12}
+.contact-phrase{grid-area:1 / 1;align-self:center;max-width:100%}
+.contact-word{display:inline-block;white-space:nowrap}
+.contact-letter{display:inline-block;transform-origin:50% 60%}
+.contact-details .contact-instagram{display:flex;align-items:center;gap:12px;width:fit-content;color:#fff}
+.contact-instagram svg{width:1em;height:1em;flex-shrink:0}
+.contact-details .contact-instagram::after{content:none}
+.contact-email-row a{min-width:0;margin-bottom:0}
+.copy-email{flex-shrink:0;min-height:44px;padding:8px 12px;border:1px solid #666;border-radius:4px;font-size:12px}
+.copy-email:hover{background:var(--ink);color:var(--bg)}
+.copy-email-status{display:block;font-size:12px;line-height:1.5;color:var(--muted)}
+.copy-email-status:not(:empty){margin-bottom:16px}
 .orbit-preview-description:empty{display:none}
 .project-heading{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,340px)}
 .project-heading p{width:100%;min-width:0;text-align:justify;text-justify:inter-word;hyphens:none;-webkit-hyphens:none;word-break:normal;overflow-wrap:normal}

@@ -219,10 +219,63 @@
   }));
   const contact = $('#contact-links');
   if (data.email) {
-    const email = make('a', '', data.email); email.href = `mailto:${data.email}`; contact.append(email);
+    const emailRow = make('div', 'contact-email-row');
+    const email = make('a', '', data.email);
+    email.href = `mailto:${data.email}`;
+    const copy = make('button', 'copy-email', 'Copiar');
+    copy.type = 'button';
+    copy.setAttribute('aria-label', 'Copiar correo electrónico');
+    const status = make('span', 'copy-email-status');
+    status.setAttribute('role', 'status');
+    let resetCopy;
+    copy.addEventListener('click', async () => {
+      clearTimeout(resetCopy);
+      try {
+        try {
+          await navigator.clipboard.writeText(data.email);
+        } catch {
+          const field = make('textarea');
+          field.value = data.email;
+          field.style.cssText = 'position:fixed;left:-9999px;top:0';
+          document.body.append(field);
+          try {
+            field.select();
+            if (!document.execCommand('copy')) throw new Error('Copy failed');
+          } finally {
+            field.remove();
+            copy.focus({ preventScroll: true });
+          }
+        }
+        copy.textContent = 'Copiado';
+        status.textContent = 'Correo copiado al portapapeles.';
+      } catch {
+        copy.textContent = 'Reintentar';
+        status.textContent = 'No se pudo copiar. Selecciona y copia el correo manualmente.';
+      }
+      resetCopy = setTimeout(() => { copy.textContent = 'Copiar'; status.textContent = ''; }, 4000);
+    });
+    emailRow.append(email, copy);
+    contact.append(emailRow, status);
   } else contact.append(make('div', 'contact-pending', 'Contact details coming soon.'));
   [['instagram', 'Instagram'], ['vimeo', 'Vimeo']].forEach(([key, label]) => {
-    if (data[key] && /^https?:\/\//i.test(data[key])) { const link = make('a', '', label); link.href = data[key]; link.target = '_blank'; link.rel = 'noopener noreferrer'; contact.append(link); }
+    if (data[key] && /^https?:\/\//i.test(data[key])) {
+      const link = make('a', '', label);
+      link.href = data[key];
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      if (key === 'instagram') {
+        const username = new URL(data[key]).pathname.split('/').filter(Boolean)[0];
+        link.className = 'contact-instagram';
+        link.setAttribute('aria-label', `Instagram de @${username}`);
+        const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        icon.setAttribute('viewBox', '0 0 24 24');
+        icon.setAttribute('aria-hidden', 'true');
+        icon.setAttribute('focusable', 'false');
+        icon.innerHTML = '<rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/>';
+        link.replaceChildren(icon, make('span', '', `@${username}`));
+      }
+      contact.append(link);
+    }
   });
   const stage = $('#stage');
   let layout = 'orbit', angle = .3, targetAngle = .3, dragged = false, dragging = false, startX = 0, lastX = 0;
@@ -323,10 +376,66 @@
     document.querySelectorAll('[data-layout]').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
     fadeChange($('#orbit'), draw);
   }));
+  const contactHeadline = $('#contact-headline');
+  const contactPhrases = [
+    'Have a project in mind?', 'Let’s work together.', 'Tell me about it.',
+    'Got an idea?', 'Let’s talk.', 'Make it happen.', 'What are you working on?',
+    'Start a conversation.', 'Your move.', 'Say hello.', 'Let’s shoot something.',
+    'Let’s build something.', 'What’s next?', 'Open to ideas.', 'Let’s get to work.'
+  ];
+  let phraseIndex = 0, phraseTimer, phraseRun = 0;
+  contactHeadline.replaceChildren();
+  const phraseLayers = contactPhrases.map((phrase, index) => {
+    const layer = make('span', 'contact-phrase');
+    layer.setAttribute('aria-hidden', 'true');
+    layer.style.visibility = index ? 'hidden' : 'visible';
+    phrase.split(' ').forEach((word, wordIndex) => {
+      if (wordIndex) layer.append(document.createTextNode(' '));
+      const group = make('span', 'contact-word');
+      Array.from(word).forEach((letter) => group.append(make('span', 'contact-letter', letter)));
+      layer.append(group);
+    });
+    contactHeadline.append(layer);
+    return layer;
+  });
+  contactHeadline.setAttribute('aria-label', contactPhrases[0]);
+  function syncContactPhrases() {
+    clearTimeout(phraseTimer);
+    phraseRun++;
+    phraseLayers.forEach((layer, index) => {
+      layer.querySelectorAll('.contact-letter').forEach((letter) => letter.getAnimations().forEach((animation) => animation.cancel()));
+      layer.style.visibility = index === phraseIndex ? 'visible' : 'hidden';
+    });
+    if ($('#contact').hidden || document.hidden || reducedMotion.matches) return;
+    phraseTimer = setTimeout(changeContactPhrase, 3800);
+  }
+  async function changeContactPhrase() {
+    const run = phraseRun;
+    const animateLetters = (layer, entering) => Promise.all(Array.from(layer.querySelectorAll('.contact-letter'), (letter) => {
+      const tilted = { opacity: 0, filter: 'blur(9px)', transform: `perspective(600px) translateY(${entering ? '28%' : '-28%'}) rotateX(${entering ? -95 : 95}deg) rotateZ(${(Math.random() - .5) * 20}deg)` };
+      const clear = { opacity: 1, filter: 'blur(0px)', transform: 'perspective(600px) translateY(0) rotateX(0deg) rotateZ(0deg)' };
+      return letter.animate(entering ? [tilted, clear] : [clear, tilted], {
+        duration: 520, delay: Math.random() * 320, easing: 'cubic-bezier(.22,.61,.36,1)', fill: 'both'
+      }).finished.catch(() => {});
+    }));
+    const previous = phraseLayers[phraseIndex];
+    await animateLetters(previous, false);
+    if (run !== phraseRun) return;
+    previous.style.visibility = 'hidden';
+    phraseIndex = (phraseIndex + 1) % contactPhrases.length;
+    const next = phraseLayers[phraseIndex];
+    contactHeadline.setAttribute('aria-label', contactPhrases[phraseIndex]);
+    next.style.visibility = 'visible';
+    await animateLetters(next, true);
+    if (run === phraseRun) syncContactPhrases();
+  }
+  document.addEventListener('visibilitychange', syncContactPhrases);
+  reducedMotion.addEventListener('change', syncContactPhrases);
   function route() {
     clearOrbitPreview();
     const page = ['works', 'contact'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
     ['home', 'works', 'contact'].forEach((id) => { $(`#${id}`).hidden = id !== page; });
+    syncContactPhrases();
     document.querySelectorAll('.header nav a').forEach((a) => { if (a.hash === `#${page}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     document.title = `${page === 'home' ? 'JeanPaul' : page === 'works' ? 'All Works — JeanPaul' : 'Contact — JeanPaul'} — Photography & Moving Image`;
     if (dialog.open) dialog.close();
