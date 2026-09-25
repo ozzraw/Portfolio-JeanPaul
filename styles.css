@@ -117,9 +117,36 @@ dialog.is-closing::backdrop{animation:panel-fade-out .17s ease-in forwards}
 .home.is-spread .hero-name{transition:opacity .3s ease,visibility 0s .3s,clip-path 1.2s cubic-bezier(.22,.61,.36,1)}
 
 /* Orbit-only shared-image entrance; the dialog keeps its existing content order. */
-dialog.from-orbit{animation:none;overflow:visible;background:transparent;border-color:transparent;transition:background .32s ease,border-color .32s ease}
+/* Keep scrolling geometry and suppress the generic entrance through the handoff. */
+dialog.orbit-open{animation:none;overflow:auto}
+dialog.from-orbit{background:transparent;border-color:transparent;transition:background .32s ease,border-color .32s ease}
 dialog.from-orbit>.dialog-bar,dialog.from-orbit>#project-content{opacity:0;transition:opacity .32s ease;pointer-events:none}
 dialog.from-orbit.orbit-revealing{background:#0c0c0c;border-color:#555}
 dialog.from-orbit.orbit-revealing>.dialog-bar,dialog.from-orbit.orbit-revealing>#project-content{opacity:1;pointer-events:auto}
 .project-opening-image{position:fixed;display:block;object-fit:cover;pointer-events:none;z-index:10;max-width:none;max-height:none;margin:0}
 dialog video.detail-media{aspect-ratio:16/9}
+
+/* Delayed Orbit annotation: reveal from behind the image into its right margin. */
+.gallery-card{filter:brightness(var(--orbit-brightness,1)) blur(0);transition:filter .6s cubic-bezier(.22,.75,.2,1)}
+.gallery-card:hover{filter:brightness(var(--orbit-brightness,1))}
+.gallery-card>img{position:relative;z-index:1}
+.orbit-preview{position:absolute;left:100%;top:-7px;width:clamp(180px,22vw,320px);height:var(--preview-height,200px);padding:0 0 0 24px;pointer-events:none;opacity:0;visibility:hidden;clip-path:inset(-12% 0 -12% 100%);transform:translateX(-65%) translateY(12px) rotate(-3deg);transform-origin:left center;transition:transform .65s cubic-bezier(.16,1,.3,1),clip-path .65s cubic-bezier(.16,1,.3,1),opacity .4s ease,visibility 0s .65s}
+.orbit-preview-text{height:100%;display:flex;flex-direction:column;justify-content:center;gap:14px;overflow:auto;scrollbar-width:none}
+.orbit-preview-title{display:block;font-size:clamp(20px,2.1vw,34px);font-weight:400;letter-spacing:-.055em;line-height:1.08;overflow-wrap:anywhere}
+.orbit-preview-description{display:block;color:var(--muted);font-size:clamp(11px,1vw,14px);line-height:1.55;letter-spacing:0;text-align:justify;hyphens:none;word-break:normal;overflow-wrap:normal}
+.orbit-preview-description:empty{display:none}
+.project-heading{display:grid;grid-template-columns:minmax(0,1fr) minmax(240px,340px)}
+.project-heading p{width:100%;min-width:0;text-align:justify;text-justify:inter-word;hyphens:none;-webkit-hyphens:none;word-break:normal;overflow-wrap:normal}
+@media(max-width:600px){
+  .project-heading{display:block}
+}
+.gallery-card.preview-active{z-index:250!important;filter:brightness(1)}
+.preview-active .orbit-preview{opacity:1;visibility:visible;clip-path:inset(-12% 0 -12% 0);transform:translateX(0) translateY(0) rotate(0);transition-delay:0s}
+.orbit-previewing .gallery-card:not(.preview-active){filter:brightness(var(--orbit-brightness,1)) blur(5px)}
+.hero-name{filter:blur(0);transition:opacity .3s ease,visibility 0s,clip-path 1.2s cubic-bezier(.22,.61,.36,1),filter .6s cubic-bezier(.22,.75,.2,1)}
+.orbit-previewing .hero-name{filter:blur(8px)}
+.home.is-spread .orbit-preview{display:none}
+@media(prefers-reduced-motion:reduce){
+  .orbit-preview,.gallery-card,.hero-name{transition:none}
+  .orbit-preview{transform:none}
+}

@@ -4,13 +4,21 @@
   const projects = data.projects || [];
   const $ = (selector) => document.querySelector(selector);
   const pad = (n) => String(n).padStart(2, '0');
-  const categoryName = (p) => p.category === 'film' ? 'FILM' : 'PHOTOGRAPHY';
+  const categoryName = (p) => ({ film: 'FILM', ads: 'ADS', photography: 'PHOTOGRAPHY' })[p.category] || p.category.toUpperCase();
   const make = (tag, className, text) => {
     const node = document.createElement(tag);
     if (className) node.className = className;
     if (text !== undefined) node.textContent = text;
     return node;
   };
+  function appendDescription(element, description) {
+    if (Array.isArray(description)) {
+      description.forEach((part) => {
+        const text = typeof part === 'string' ? part : part?.text || '';
+        element.append(part?.bold ? make('strong', '', text) : document.createTextNode(text));
+      });
+    } else element.textContent = description || '';
+  }
   function image(src, alt, position, lazy = true) {
     const img = make('img');
     img.src = src || 'media/demo/01.svg';
@@ -55,9 +63,11 @@
     dialog.append(clone);
     let cancelled = false;
     let animation;
+    let reveal;
     const cleanup = () => {
       cancelled = true;
       animation?.cancel();
+      reveal?.cancel();
       clone.remove();
       dialog.classList.remove('from-orbit', 'orbit-revealing');
       openingCleanup = null;
@@ -75,7 +85,8 @@
       await animation.finished;
       if (cancelled) return;
       dialog.classList.add('orbit-revealing');
-      await clone.animate([{opacity:1},{opacity:0}], {duration:320,fill:'forwards',easing:'ease-out'}).finished;
+      reveal = clone.animate([{opacity:1},{opacity:0}], {duration:320,fill:'forwards',easing:'ease-out'});
+      await reveal.finished;
     } catch { /* Closing mid-transition cancels the opening cleanly. */ }
     finally { if (!cancelled) cleanup(); }
   }
@@ -96,9 +107,11 @@
 
   function openProject(project, sourceCard = null) {
     if (dialog.open || closingDialog) return;
+    clearOrbitPreview();
     const source = sourceCard?.querySelector('img');
     const start = source?.getBoundingClientRect();
     const expand = source && start.width > 0 && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    dialog.classList.toggle('orbit-open', Boolean(expand));
     dialog.classList.toggle('from-orbit', Boolean(expand));
     const content = $('#project-content');
     content.replaceChildren();
@@ -108,18 +121,11 @@
     const title = make('h2', '', project.title); title.id = 'project-title';
     titleGroup.append(title);
     const description = make('p');
-    if (Array.isArray(project.description)) {
-      project.description.forEach((part) => {
-        const text = typeof part === 'string' ? part : part?.text || '';
-        description.append(part?.bold ? make('strong', '', text) : document.createTextNode(text));
-      });
-    } else {
-      description.textContent = project.description || '';
-    }
+    appendDescription(description, project.description);
     heading.append(titleGroup, description);
     content.append(heading);
     const media = project.media?.length ? project.media : [{ type: 'image', src: project.cover }];
-    media.forEach((item) => {
+    media.forEach((item, index) => {
       const figure = make('figure', 'media-figure');
       let element;
       if (item.type === 'youtube' && /^[A-Za-z0-9_-]{11}$/.test(item.videoId)) {
@@ -154,6 +160,12 @@
       } else {
         element = image(item.src, item.alt || project.title, null);
         element.className = 'detail-media';
+        // Reserve the first image's final proportions before its lazy load.
+        if (index === 0 && source?.naturalWidth && item.src === project.cover) {
+          element.width = source.naturalWidth;
+          element.height = source.naturalHeight;
+          element.style.height = 'auto';
+        }
       }
       figure.insertBefore(element, figure.querySelector('figcaption'));
       if (item.caption) figure.append(make('figcaption', '', item.caption));
@@ -172,6 +184,7 @@
   }});
   dialog.addEventListener('close', () => {
     openingCleanup?.();
+    dialog.classList.remove('orbit-open');
     dialog.querySelectorAll('video').forEach((v) => { v.pause(); v.removeAttribute('src'); v.load(); });
     dialog.querySelectorAll('iframe').forEach((frame) => frame.remove());
     document.body.classList.remove('modal-open');
@@ -214,6 +227,28 @@
   const stage = $('#stage');
   let layout = 'orbit', angle = .3, targetAngle = .3, dragged = false, dragging = false, startX = 0, lastX = 0;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  let previewTimer = 0;
+  let previewCard = null;
+  const hoverPointer = matchMedia('(hover: hover) and (pointer: fine)');
+  function clearOrbitPreview() {
+    clearTimeout(previewTimer);
+    previewTimer = 0;
+    previewCard?.classList.remove('preview-active');
+    previewCard = null;
+    $('#home').classList.remove('orbit-previewing');
+  }
+  function queueOrbitPreview(card) {
+    clearOrbitPreview();
+    if (layout !== 'orbit' || dragging || dialog.open || !hoverPointer.matches) return;
+    previewTimer = setTimeout(() => {
+      if (layout !== 'orbit' || dragging || dialog.open || !card.matches(':hover')) return;
+      const photo = card.querySelector('img');
+      card.style.setProperty('--preview-height', `${photo.offsetHeight}px`);
+      previewCard = card;
+      card.classList.add('preview-active');
+      $('#home').classList.add('orbit-previewing');
+    }, 1000);
+  }
   const galleryCards = projects.map((project, i) => {
     const card = make('button', 'gallery-card');
     card.setAttribute('aria-label', `Open ${project.title}`);
@@ -221,6 +256,17 @@
     const caption = make('span', 'card-caption');
     caption.append(make('span', '', `${pad(i + 1)} / ${project.title}`), make('span', '', project.category === 'film' ? '▶' : '↗'));
     card.append(caption);
+    const preview = make('span', 'orbit-preview');
+    preview.setAttribute('aria-hidden', 'true');
+    const previewText = make('span', 'orbit-preview-text');
+    previewText.append(make('span', 'orbit-preview-title', project.title));
+    const previewDescription = make('span', 'orbit-preview-description');
+    appendDescription(previewDescription, project.description);
+    previewText.append(previewDescription);
+    preview.append(previewText);
+    card.append(preview);
+    card.addEventListener('pointerenter', () => queueOrbitPreview(card));
+    card.addEventListener('pointerleave', clearOrbitPreview);
     card.addEventListener('click', () => { if (!dragged) openProject(project, layout === 'orbit' ? card : null); });
     card.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') dragged = false; });
     $('#orbit').append(card); return card;
@@ -248,7 +294,7 @@
       }
       card.style.transform = `translate(-50%, -50%) translate3d(${x}px,${y}px,${z}px) rotateY(${rotate}deg)`;
       card.style.zIndex = String(Math.round(depth * 100 + 101));
-      card.style.filter = `brightness(${layout === 'orbit' ? .68 + (depth + 1) * .16 : 1})`;
+      card.style.setProperty('--orbit-brightness', layout === 'orbit' ? .68 + (depth + 1) * .16 : 1);
     });
   }
   let frame = 0;
@@ -259,23 +305,26 @@
     draw();
     if (Math.abs(delta) > .001 && !$('#home').hidden) frame = requestAnimationFrame(tick);
   }
-  function animate() { if (!frame) frame = requestAnimationFrame(tick); }
+  function animate() { clearOrbitPreview(); if (!frame) frame = requestAnimationFrame(tick); }
   stage.addEventListener('wheel', (event) => { event.preventDefault(); targetAngle += (event.deltaY + event.deltaX) * .002; animate(); }, { passive: false });
-  stage.addEventListener('pointerdown', (event) => { if (event.button !== 0) return; dragging = true; dragged = false; startX = lastX = event.clientX; stage.classList.add('dragging'); });
+  stage.addEventListener('pointerdown', (event) => { if (event.button !== 0) return; clearOrbitPreview(); dragging = true; dragged = false; startX = lastX = event.clientX; stage.classList.add('dragging'); });
   window.addEventListener('pointermove', (event) => { if (!dragging) return; if (Math.abs(event.clientX - startX) > 6) dragged = true; targetAngle += (event.clientX - lastX) * .007; lastX = event.clientX; animate(); });
   function endDrag() { dragging = false; stage.classList.remove('dragging'); }
   window.addEventListener('pointerup', endDrag);
   window.addEventListener('pointercancel', endDrag);
-  window.addEventListener('blur', endDrag);
+  window.addEventListener('blur', () => { endDrag(); clearOrbitPreview(); });
+  document.addEventListener('visibilitychange', clearOrbitPreview);
   $('#previous').addEventListener('click', () => { targetAngle -= .6; animate(); });
   $('#next').addEventListener('click', () => { targetAngle += .6; animate(); });
   document.querySelectorAll('[data-layout]').forEach((button) => button.addEventListener('click', () => {
+    clearOrbitPreview();
     layout = button.dataset.layout;
     $('#home').classList.toggle('is-spread', layout === 'scatter');
     document.querySelectorAll('[data-layout]').forEach((b) => b.setAttribute('aria-pressed', String(b === button)));
     fadeChange($('#orbit'), draw);
   }));
   function route() {
+    clearOrbitPreview();
     const page = ['works', 'contact'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'home';
     ['home', 'works', 'contact'].forEach((id) => { $(`#${id}`).hidden = id !== page; });
     document.querySelectorAll('.header nav a').forEach((a) => { if (a.hash === `#${page}`) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
@@ -284,7 +333,7 @@
     window.scrollTo(0, 0);
     if (page === 'home') draw();
   }
-  window.addEventListener('resize', draw);
+  window.addEventListener('resize', () => { clearOrbitPreview(); draw(); });
   window.addEventListener('hashchange', () => fadeChange(document.querySelector('main'), route));
   renderWorks(); route();
 })();
