@@ -109,7 +109,8 @@ dialog.is-closing::backdrop{animation:panel-fade-out .17s ease-in forwards}
 .intro-expansion{display:block;width:0;opacity:0;overflow:hidden;flex-shrink:0;clip-path:inset(0)}
 .intro-expansion>span{display:inline-block;white-space:nowrap;padding-right:.02em}
 .intro-skip{position:absolute;right:clamp(20px,4vw,60px);bottom:max(24px,env(safe-area-inset-bottom));padding:14px 0;font:10px Arial,sans-serif;letter-spacing:1px;color:var(--muted)}
-@media(prefers-reduced-motion:reduce){.intro-playing #brand-intro{display:none}}
+.intro-still .intro-initial{opacity:1}
+.intro-still .intro-expansion{width:auto;opacity:1}
 
 /* Reveal the page title after the intro without overriding Spread's fade. */
 .hero-name{clip-path:inset(0 0 0 0);transition:opacity .3s ease,visibility 0s,clip-path 1.2s cubic-bezier(.22,.61,.36,1)}

@@ -9,15 +9,30 @@
     const node = document.createElement(tag);
     if (className) node.className = className;
     if (text !== undefined) node.textContent = text;
+    if (['work-title', 'orbit-preview-title', 'card-caption'].includes(className)) protectName(node);
     return node;
   };
+  function protectName(node) {
+    node.setAttribute('translate', 'no');
+    node.classList.add('notranslate');
+    return node;
+  }
+  document.querySelectorAll('.wordmark, .hero-name, .contact-signature, #brand-intro').forEach(protectName);
+  function appendNamedText(element, text) {
+    const names = /(JeanPaul|Giovanillo's Pizza|IlloJuan|Codec|Álvaro Sin|Adah García del Arco|IK Multimedia|TONEX ONE Plus|Virtu Magazine|Virtu|Fitness|Riusforza|Sónar|Akrilla|Sala Apolo|Festival B|Rusowsky|Tristan|La Rebe)/gi;
+    text.split(names).forEach((part, index) => {
+      element.append(index % 2 ? protectName(make('span', '', part)) : document.createTextNode(part));
+    });
+  }
   function appendDescription(element, description) {
     if (Array.isArray(description)) {
       description.forEach((part) => {
         const text = typeof part === 'string' ? part : part?.text || '';
-        element.append(part?.bold ? make('strong', '', text) : document.createTextNode(text));
+        const target = part?.bold ? make('strong') : element;
+        appendNamedText(target, text);
+        if (target !== element) element.append(target);
       });
-    } else element.textContent = description || '';
+    } else appendNamedText(element, description || '');
   }
   function image(src, alt, position, lazy = true) {
     const img = make('img');
@@ -119,6 +134,7 @@
     const titleGroup = make('div');
     titleGroup.append(make('small', '', `${categoryName(project)} / ${project.year || ''}`));
     const title = make('h2', '', project.title); title.id = 'project-title';
+    protectName(title);
     titleGroup.append(title);
     const description = make('p');
     appendDescription(description, project.description);
@@ -221,6 +237,7 @@
   if (data.email) {
     const emailRow = make('div', 'contact-email-row');
     const email = make('a', '', data.email);
+    protectName(email);
     email.href = `mailto:${data.email}`;
     const copy = make('button', 'copy-email', 'Copiar');
     copy.type = 'button';
@@ -266,6 +283,7 @@
       if (key === 'instagram') {
         const username = new URL(data[key]).pathname.split('/').filter(Boolean)[0];
         link.className = 'contact-instagram';
+        protectName(link);
         link.setAttribute('aria-label', `Instagram de @${username}`);
         const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         icon.setAttribute('viewBox', '0 0 24 24');

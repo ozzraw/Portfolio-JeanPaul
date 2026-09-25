@@ -3,7 +3,6 @@
   const intro = document.querySelector('#brand-intro');
   if (!intro) return;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  if (reducedMotion.matches) { intro.remove(); return; }
   const word = intro.querySelector('.intro-word');
   const pageTitle = document.querySelector('.hero-name');
   pageTitle?.classList.add('title-awaiting-intro');
@@ -43,7 +42,7 @@
     setTimeout(() => {
       // Opacity remains controlled by Orbit/Spread; this reveal only unmasks the title.
       pageTitle?.classList.remove('title-awaiting-intro');
-    }, 1500);
+    }, reducedMotion.matches ? 0 : 1500);
     document.removeEventListener('keydown', onKey);
   }
   function onKey(event) { if (event.key === 'Escape') finish(); }
@@ -51,8 +50,15 @@
   document.addEventListener('keydown', onKey);
   document.body.classList.add('intro-playing');
   async function play() {
+    if (reducedMotion.matches) {
+      intro.classList.add('intro-still');
+      await wait(1000);
+      finish();
+      return;
+    }
     // Use the same variable face as the existing wordmark, without delaying indefinitely.
-    await Promise.race([document.fonts.load('600 100px InterVariableFramer'), wait(600)]);
+    const fontReady = document.fonts?.load('600 100px InterVariableFramer').catch(() => {});
+    await Promise.race([fontReady, wait(600)]);
     if (stopped) return;
     await wait(160);
     for (const initial of intro.querySelectorAll('.intro-initial')) {
