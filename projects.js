@@ -9,8 +9,8 @@
  * Añade o quita proyectos copiando o eliminando un bloque completo.
  */
 window.PORTFOLIO = {
-  email: "", // Añade tu correo aquí para activar el enlace de contacto.
-  instagram: "", // URL completa de tu perfil.
+  email: "ian@silentemedia.site", // Correo de trabajo.
+  instagram: "https://www.instagram.com/ikn.ozz/", // URL completa de tu perfil.
   vimeo: "", // URL completa de tu perfil (opcional).
   projects: [
     {"id": "01", "title": "Secuencia final (Short film)", "category": "film", "year": "2025", "cover": "media/secuencia-final.jpeg", "description": "A psychological horror short film about a meta-mental persecution. I directed an adapted script written by someone else and also served as Director of Photography, colorist, and editor.", "media": [{"type": "youtube", "videoId": "7OwPkIUNjuA", "shareId": "hbaiY63BXI2pEvLg"}]},
